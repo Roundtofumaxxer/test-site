@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quiz App</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #f5f5f5;
+  }
+  .card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 400px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  button {
+    display: block;
+    width: 100%;
+    margin: 8px 0;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #eee;
+  }
+  button:hover {
+    background: #ddd;
+  }
+  .correct {
+    background: #4caf50 !important;
+    color: white;
+  }
+  .wrong {
+    background: #f44336 !important;
+    color: white;
+  }
+  #timer {
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card" id="app"></div>
+
+<script>
+// JSON Quiz Data
+const quizData = [
+  {
+    question: "What does HTML stand for?",
+    options: ["Hyper Text Markup Language", "Home Tool Markup Language", "Hyperlinks Text Mark Language", "Hyper Tool Multi Language"],
+    answer: 0
+  },
+  {
+    question: "Which language is used for styling web pages?",
+    options: ["HTML", "JQuery", "CSS", "XML"],
+    answer: 2
+  },
+  {
+    question: "Which is a JavaScript framework?",
+    options: ["Django", "Laravel", "React", "Flask"],
+    answer: 2
+  }
+];
+
+let currentQuestion = 0;
+let score = 0;
+let results = [];
+let timer;
+let timeLeft = 60;
+
+// Start Screen
+function showStart() {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <h2>Quiz App</h2>
+    <p>Test your knowledge! Each question has 1 minute.</p>
+    <button onclick="startQuiz()">Start</button>
+  `;
+}
+
+// Start Quiz
+function startQuiz() {
+  currentQuestion = 0;
+  score = 0;
+  results = [];
+  showQuestion();
+}
+
+// Show Question
+function showQuestion() {
+  clearInterval(timer);
+  timeLeft = 60;
+
+  if (currentQuestion >= quizData.length) {
+    return showResults();
+  }
+
+  const q = quizData[currentQuestion];
+  const app = document.getElementById("app");
+
+  app.innerHTML = `
+    <div id="timer">Time: ${timeLeft}s</div>
+    <h3>${q.question}</h3>
+    ${q.options.map((opt, i) => `<button onclick="selectAnswer(${i})">${opt}</button>`).join("")}
+  `;
+
+  startTimer();
+}
+
+// Timer Logic
+function startTimer() {
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").innerText = `Time: ${timeLeft}s`;
+
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      results.push({ correct: false, skipped: true });
+      score--; // penalty
+      currentQuestion++;
+      showQuestion();
+    }
+  }, 1000);
+}
+
+// Select Answer
+function selectAnswer(index) {
+  clearInterval(timer);
+  const q = quizData[currentQuestion];
+  const buttons = document.querySelectorAll("button");
+
+  buttons.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.answer) btn.classList.add("correct");
+    if (i === index && i !== q.answer) btn.classList.add("wrong");
+  });
+
+  const correct = index === q.answer;
+  if (correct) score++;
+
+  results.push({ correct, skipped: false });
+
+  setTimeout(() => {
+    currentQuestion++;
+    showQuestion();
+  }, 1500);
+}
+
+// Show Results
+function showResults() {
+  const app = document.getElementById("app");
+
+  app.innerHTML = `
+    <h2>Quiz Finished!</h2>
+    <p>Your Score: ${score}</p>
+    <h3>Results:</h3>
+    ${results.map((r, i) => `
+      <p>Q${i + 1}: ${
+        r.skipped ? "Skipped ❌" :
+        r.correct ? "Correct ✅" : "Wrong ❌"
+      }</p>
+    `).join("")}
+    <button onclick="showStart()">Restart</button>
+  `;
+}
+
+// Init
+showStart();
+</script>
+
+</body>
+</html>
